@@ -1,7 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 
-var createJSONData = require('./bleh').createJSONData;
+var createJSONData = require('./pngUtil').createJSONData;
 
 var staticDirectory = __dirname + '/public';
 var staticFiles = fs.readdirSync(staticDirectory);
