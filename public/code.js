@@ -8,50 +8,78 @@ window.onload = function() {
     type: 'GET',
     url: 'http://localhost:7001/getImageData'
   }).then(function(json) {
-    pixelData = json.root;
+    debugger;
+    pixelData = _.map(json.root, function(pixel) {
+      pixel.x = pixel.origX;
+      pixel.y = pixel.origY;
+      pixel.xVelocity = 0;
+      pixel.yVelocity = 0;
+      return pixel;
+    });
     var canvas = document.getElementById('canvas');
-    canvas.onmousemove = function(e) {mouseX = e.x; mouseY = e.y;};
+    canvas.height = json.height;
+    canvas.width = json.width;
+    canvas.onmousemove = function(e) { mouseX = e.x; mouseY = e.y; };
+    canvas.onmouseout = function(e) { mouseX = -1; mouseY = -1; }
     drawCanvas();
 
   })
 }
 
 function drawCanvas() {
-
   window.requestAnimationFrame(drawCanvas);
-
   var canvas = document.getElementById('canvas');
   var canvasWidth  = canvas.width;
   var canvasHeight = canvas.height;
   var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   var imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
   var data = imageData.data;
 
   for (var i = 0; i < pixelData.length; i++) {
-    var x = pixelData[i].origX;
-    var y = pixelData[i].origY;
-    var idx = (y * canvasWidth + x) * 4;
+    var pixel = pixelData[i];
 
-    var normalizedDistance = Math.sqrt(
-      ((mouseX - x) / canvas.height * 255) * ((mouseX - x) / canvas.height * 255) +
-      ((mouseY - y) / canvas.height * 255) * ((mouseY - y) / canvas.height * 255) 
-    );
+    var homeDX = pixel.origX - pixel.x;
+    var homeDY = pixel.origY - pixel.y;
+    var homeDistance = Math.sqrt(homeDX * homeDX + homeDY * homeDY);
+    var homeForce = homeDistance * 0.01;
+    var homeAngle = Math.atan2(homeDY, homeDX);
 
-    //rainbow
-    //Math.sin(.3*normalizedDistance + 0) * 127 + 128 || 0;
-    //Math.sin(.3*normalizedDistance + 2) * 127 + 128 || 0;
-    //Math.sin(.3*normalizedDistance + 4) * 127 + 128 || 0;
+    var cursorForce = 0;
+    var cursorAngle = 0;
 
-    var rgba = normalizedDistance/255 < .2 ? [
-      Math.random() * 255,
-      Math.random() * 255,
-      Math.random() * 255
-    ] : [0, 0, 0];
+    if (mouseX >= 0) {
+      var cursorDX = pixel.x - mouseX;
+      var cursorDY = pixel.y - mouseY;
+      var cursorDistanceSquared = cursorDX * cursorDX + cursorDY + cursorDY;
+      cursorForce = (10 > 10 / cursorDistanceSquared) ? (10 / cursorDistanceSquared) : (10);
+      cursorAngle = Math.atan2(cursorDY, cursorDX);
+    }
 
-    data[idx] = rgba[0];
-    data[++idx] = rgba[1];
-    data[++idx] = rgba[2];
+    pixel.xVelocity += homeForce * Math.cos(homeAngle) + cursorForce * Math.cos(cursorAngle);
+    pixel.yVelocity += homeForce * Math.sin(homeAngle) + cursorForce * Math.sin(cursorAngle);
+
+    pixel.xVelocity *= 0.92;
+    pixel.yVelocity *= 0.92;
+    
+    pixel.x += pixel.xVelocity;
+    pixel.y += pixel.yVelocity;
+
+    if (pixel.x > canvasWidth) pixel.x = canvasWidth;
+    if (pixel.x < 0) pixel.x = 0;
+    if (pixel.y > canvasHeight) pixel.y = canvasHeight;
+    if (pixel.y < 0) pixel.y = 0;
+
+    var idx = (Math.round(pixel.y) * canvasWidth + Math.round(pixel.x)) * 4;
+
+    // data[idx] = Math.random() * 255;
+    // data[++idx] = Math.random() * 255;
+    // data[++idx] = Math.random() * 255;
+    data[idx] = 0;
+    data[++idx] = 0;
+    data[++idx] = 0;
+
     data[++idx] = 255;
   }
 
