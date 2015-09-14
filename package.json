@@ -1,9 +1,0 @@
-{
-  "name": "Dots",
-  "description": "Serializes png data",
-  "author": "Richard Green",
-  "dependencies": {
-    "pngjs": "*",
-    "promise": "*"
-  }
-}

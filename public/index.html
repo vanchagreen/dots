@@ -1,6 +1,7 @@
 <html>
 
   <head>
+    <link href='https://fonts.googleapis.com/css?family=Droid+Serif' rel='stylesheet' type='text/css'>
     <link href='./styles.css' rel='stylesheet' type='text/css'>
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"> </script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"> </script>
@@ -8,6 +9,16 @@
   </head>
 
   <body>
-    <canvas id="canvas" width="518" height="168">
+    <div id="container">
+      <div id="header"> 
+        <div id="title"> Pixel Explosion </div>
+        <div id="toolbar"> 
+          <input type="file" id="upload"> </input>
+        </div>
+      </div>
+      <div id="canvasWrapper">
+        <canvas id="canvas" width="518" height="168"> </canvas>
+      </div>
+    </div>
   </body>
 </html>

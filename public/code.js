@@ -5,26 +5,51 @@ var oldMouseY = -1;
 
 var pixelData = [];
 
-window.onload = function() {
-  $.ajax({
-    type: 'GET',
-    url: 'http://localhost:7001/getImageData'
-  }).then(function(json) {
-    pixelData = _.map(json.root, function(pixel) {
-      pixel.x = pixel.origX;
-      pixel.y = pixel.origY;
-      pixel.xVelocity = 0;
-      pixel.yVelocity = 0;
-      return pixel;
-    });
-    var canvas = document.getElementById('canvas');
-    canvas.height = json.height;
-    canvas.width = json.width;
-    canvas.onmousemove = function(e) { mouseX = e.x; mouseY = e.y;};
-    canvas.onmouseout = function(e) { mouseX = -1; mouseY = -1; }
-    drawCanvas();
+function getNonWhitePixels(imageData, width, height) {
+  var nonWhiteData = [];
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      var idx = (width * y + x) << 2;
+      var pixel = [imageData[idx], imageData[idx + 1], imageData[idx + 2]];
+      if (pixel[0] < 240 || pixel[1] < 240 || pixel[1] < 240) {
+        nonWhiteData.push({origX: x, origY: y, rgba: pixel, x: x, y: y, xVelocity: 0, yVelocity: 0});
+      }
+    }
+  }
+  return nonWhiteData;
+}
 
-  })
+window.onload = function() {
+
+  document.getElementById('upload').onchange = function() {
+
+    pixelData = [];
+
+    var file = this.files[0];
+    var urlReader = new FileReader();
+
+    urlReader.onload = function() {
+      var img = document.createElement("img");
+      img.src = urlReader.result;
+
+      var canvas = document.getElementById('canvas');
+      canvas.height = img.height;
+      canvas.width = img.width;
+      var context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0 );
+
+      pixelData = getNonWhitePixels(context.getImageData(0, 0, img.width, img.height).data, img.width, img.height);
+
+      canvas.onmousemove = function(e) {
+        mouseX = e.x - canvas.getClientRects()[0].left;
+        mouseY = e.y - canvas.getClientRects()[0].top;
+      };
+      canvas.onmouseout = function(e) { mouseX = -1; mouseY = -1; }
+      drawCanvas();
+    }
+
+    urlReader.readAsDataURL(file);
+  }
 }
 
 function drawCanvas() {
@@ -35,7 +60,6 @@ function drawCanvas() {
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   var imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-
   var data = imageData.data;
 
   for (var i = 0; i < pixelData.length; i++) {
@@ -54,7 +78,6 @@ function drawCanvas() {
       var cursorDX = pixel.x - mouseX;
       var cursorDY = pixel.y - mouseY;
       var cursorDistanceSquared = cursorDX * cursorDX + cursorDY + cursorDY;
-      // var k = 1250;
       var k = 10000;
       cursorForce = (k > k / cursorDistanceSquared) ? (k / cursorDistanceSquared) : (k);
       cursorAngle = Math.atan2(cursorDY, cursorDX);
@@ -76,17 +99,17 @@ function drawCanvas() {
 
     var idx = (Math.round(pixel.y) * canvasWidth + Math.round(pixel.x)) * 4;
 
-    // var normalizedDistance = Math.sqrt(
-    //   ((pixel.x) / canvas.height * 255) * ((pixel.x) / canvas.height * 255) +
-    //   ((pixel.y) / canvas.height * 255) * ((pixel.y) / canvas.height * 255) 
-    // );
+    var rainbowX = canvasWidth/2;
+    var rainbowY = canvasHeight/2;
 
+    var normalizedDistance = Math.sqrt(
+      Math.pow((pixel.x - rainbowX) / canvas.height * 255, 2) + 
+      Math.pow((pixel.y - rainbowY) / canvas.height * 255, 2)
+    );
 
     // data[idx] = Math.sin(.3*normalizedDistance + 0) * 127 + 128;
     // data[++idx] = Math.sin(.3*normalizedDistance + 2) * 127 + 128;
     // data[++idx] = Math.sin(.3*normalizedDistance + 4) * 127 + 128;
-
-
 
     // data[idx] = Math.random() * 255;
     // data[++idx] = Math.random() * 255;

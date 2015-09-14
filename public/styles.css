@@ -1,3 +1,35 @@
 body {
   margin: 0;
+  overflow: hidden;
+}
+
+#container {
+  position: relative;
+  height: 100%;
+}
+
+#canvasWrapper {
+  position: relative;
+  height: 100%;
+}
+
+#canvas {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+#header {
+  width: 100%;
+  padding-bottom: 10px;
+}
+
+#title {
+  text-align: center;
+  font-family: 'Droid Serif', serif;
+  font-size: 3rem;
+  border: #008B8B;
+  border-width: 0 0 15px 0;
+  border-style: solid;
+
 }
