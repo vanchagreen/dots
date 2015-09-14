@@ -62,7 +62,10 @@ window.onload = function() {
   }
 
   document.getElementById('upload').onchange = function() {
-
+    if (this.files.length > 1) {
+      alert("Only upload one file please!");
+      return;
+    }
     pixelData = [];
 
     var file = this.files[0];
