@@ -54,6 +54,9 @@ function getRandomColors() {
 
 
 window.onload = function() {
+  var maxHeight = document.getElementById('canvasWrapper').getBoundingClientRect().height;
+  var maxWidth = document.getElementById('canvasWrapper').getBoundingClientRect().width;
+
   canvas = document.getElementById('canvas');
   context = canvas.getContext('2d');
 
@@ -65,7 +68,7 @@ window.onload = function() {
     if (this.files.length > 1) {
       alert("Only upload one file please!");
       return;
-    }
+    } else if (!this.files.length) return;
     pixelData = [];
 
     var file = this.files[0];
@@ -74,10 +77,20 @@ window.onload = function() {
     urlReader.onload = function() {
       var img = document.createElement("img");
       img.src = urlReader.result;
+      img.style.maxWidth = '100%';
 
-      canvas.height = img.height;
-      canvas.width = img.width;
-      context.drawImage(img, 0, 0);
+      if (img.height > maxHeight || img.width > maxWidth) {
+        var widthRatio = maxWidth/img.width;
+        var heightRatio = maxHeight/img.height;
+        var ratio = heightRatio < widthRatio ? heightRatio : widthRatio;
+        canvas.height = img.height * ratio * 0.75;
+        canvas.width = img.width * ratio * 0.75;
+      } else {
+        canvas.height = img.height;
+        canvas.width = img.width;
+      }
+
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       pixelData = getNonWhitePixels(context.getImageData(0, 0, img.width, img.height).data, img.width, img.height);
 
