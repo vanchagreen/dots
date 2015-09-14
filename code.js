@@ -5,6 +5,17 @@ var oldMouseY = -1;
 
 var pixelData = [];
 
+var canvas;
+var context;
+
+var algorithmMap = {
+  'original': getOriginalColors,
+  'rainbow': getRainbowColors,
+  'static': getRandomColors
+}
+
+var getRGB = algorithmMap['original'];
+
 function getNonWhitePixels(imageData, width, height) {
   var nonWhiteData = [];
   for (var y = 0; y < height; y++) {
@@ -19,7 +30,36 @@ function getNonWhitePixels(imageData, width, height) {
   return nonWhiteData;
 }
 
+function getOriginalColors(pixel) {
+  return pixel.rgba;
+}
+
+function getRainbowColors(pixel) {
+  var rainbowX = canvas.width / 2;
+  var rainbowY = canvas.height / 2;
+
+  var normalizedDistance = Math.sqrt(
+    Math.pow((pixel.x - rainbowX) / canvas.height * 255, 2) + 
+    Math.pow((pixel.y - rainbowY) / canvas.height * 255, 2)
+  );
+
+  return _.times(3, function(n) {
+    return Math.sin(.3 * normalizedDistance + n * 2) * 127 + 128;
+  })
+}
+
+function getRandomColors() {
+  return _.times(3, function() {return Math.random() * 255});
+}
+
+
 window.onload = function() {
+  canvas = document.getElementById('canvas');
+  context = canvas.getContext('2d');
+
+  document.getElementById('effects').onchange = function(e) {
+    getRGB = algorithmMap[e.target.value];
+  }
 
   document.getElementById('upload').onchange = function() {
 
@@ -32,11 +72,9 @@ window.onload = function() {
       var img = document.createElement("img");
       img.src = urlReader.result;
 
-      var canvas = document.getElementById('canvas');
       canvas.height = img.height;
       canvas.width = img.width;
-      var context = canvas.getContext('2d');
-      context.drawImage(img, 0, 0 );
+      context.drawImage(img, 0, 0);
 
       pixelData = getNonWhitePixels(context.getImageData(0, 0, img.width, img.height).data, img.width, img.height);
 
@@ -54,12 +92,10 @@ window.onload = function() {
 
 function drawCanvas() {
   window.requestAnimationFrame(drawCanvas);
-  var canvas = document.getElementById('canvas');
   var canvasWidth  = canvas.width;
   var canvasHeight = canvas.height;
-  var ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  var imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+  context.clearRect(0, 0, canvasWidth, canvasHeight);
+  var imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
   var data = imageData.data;
 
   for (var i = 0; i < pixelData.length; i++) {
@@ -99,32 +135,14 @@ function drawCanvas() {
 
     var idx = (Math.round(pixel.y) * canvasWidth + Math.round(pixel.x)) * 4;
 
-    var rainbowX = canvasWidth/2;
-    var rainbowY = canvasHeight/2;
+    var rgb = getRGB(pixel);
 
-    var normalizedDistance = Math.sqrt(
-      Math.pow((pixel.x - rainbowX) / canvas.height * 255, 2) + 
-      Math.pow((pixel.y - rainbowY) / canvas.height * 255, 2)
-    );
-
-    // data[idx] = Math.sin(.3*normalizedDistance + 0) * 127 + 128;
-    // data[++idx] = Math.sin(.3*normalizedDistance + 2) * 127 + 128;
-    // data[++idx] = Math.sin(.3*normalizedDistance + 4) * 127 + 128;
-
-    // data[idx] = Math.random() * 255;
-    // data[++idx] = Math.random() * 255;
-    // data[++idx] = Math.random() * 255;
-
-    // data[idx] = 0;
-    // data[++idx] = 0;
-    // data[++idx] = 0;
-
-    data[idx] = pixel.rgba[0];
-    data[++idx] = pixel.rgba[1];
-    data[++idx] = pixel.rgba[2];    
+    data[idx] = rgb[0];
+    data[++idx] = rgb[1];
+    data[++idx] = rgb[2];    
 
     data[++idx] = 255;
   }
 
-  ctx.putImageData(imageData, 0, 0);
+  context.putImageData(imageData, 0, 0);
 }

@@ -29,7 +29,8 @@ body {
   font-family: 'Droid Serif', serif;
   font-size: 3rem;
   border: #008B8B;
-  border-width: 0 0 15px 0;
+  border-width: 0 0 5px 0;
   border-style: solid;
-
+  padding-bottom: 2px;
+  margin-bottom: 5px;
 }
